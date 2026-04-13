@@ -1,4 +1,4 @@
-import * as THREE from 'three';
+// import * as THREE from 'three'; // Removed to bypass CORS on local file double-click
 
 // ── GAME STATE ──────────────────────────────────────────────────────────────
 let lives = 2, kills = 0;
