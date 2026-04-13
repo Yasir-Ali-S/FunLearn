@@ -5,13 +5,8 @@
   <title>CS:GO Math Shooter 3D</title>
   <link rel="stylesheet" href="shooter.css">
 
-  <script type="importmap">
-  {
-    "imports": {
-      "three": "/lib/three.module.js"
-    }
-  }
-  </script>
+  <!-- Included Three.js from CDN to bypass CORS security policies when double-clicking local file:/// -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 </head>
 <body>
 
@@ -59,6 +54,6 @@
   </div>
 </div>
 
-<script type="module" src="shooter.js"></script>
+<script src="shooter.js"></script>
 </body>
 </html>
