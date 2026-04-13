@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Application Hub</title>
+  <style>
+    :root {
+      --primary: #f6c015;
+      --primary-glow: rgba(246, 192, 21, 0.4);
+      --bg-color: #050505;
+      --card-bg: rgba(20, 20, 20, 0.8);
+      --card-border: #333;
+      --text-main: #ffffff;
+      --text-muted: #888888;
+      
+      --sci-primary: #0ea5e9;
+      --sci-glow: rgba(14, 165, 233, 0.4);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: var(--bg-color);
+      color: var(--text-main);
+      font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background-image: 
+        radial-gradient(circle at 15% 50%, rgba(246, 192, 21, 0.05), transparent 25%),
+        radial-gradient(circle at 85% 30%, rgba(14, 165, 233, 0.05), transparent 25%);
+      overflow: hidden;
+    }
+
+    /* Animated Grid Background */
+    .bg-grid {
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background-size: 40px 40px;
+      background-image: linear-gradient(to right, rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+                        linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+      z-index: -1;
+      transform: perspective(500px) rotateX(60deg) translateY(-100px) translateZ(-200px);
+      animation: gridMove 20s linear infinite;
+    }
+
+    @keyframes gridMove {
+      0% { background-position: 0 0; }
+      100% { background-position: 0 40px; }
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 60px;
+      animation: fadeInDown 1s ease forwards;
+    }
+
+    h1 {
+      font-size: 3.5rem;
+      font-weight: 800;
+      letter-spacing: -1px;
+      text-transform: uppercase;
+      background: linear-gradient(to right, #fff, #aaa);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 15px;
+    }
+
+    .subtitle {
+      font-size: 1.2rem;
+      color: var(--text-muted);
+      letter-spacing: 2px;
+      text-transform: uppercase;
+    }
+
+    .grid {
+      display: flex;
+      gap: 40px;
+      max-width: 1000px;
+      width: 90%;
+      perspective: 1000px;
+    }
+
+    .card {
+      flex: 1;
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 16px;
+      padding: 40px 30px;
+      text-decoration: none;
+      color: var(--text-main);
+      position: relative;
+      overflow: hidden;
+      transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      opacity: 0;
+      transform: translateY(30px);
+      backdrop-filter: blur(10px);
+    }
+
+    .card:nth-child(1) { animation: fadeInUp 0.8s 0.2s ease forwards; }
+    .card:nth-child(2) { animation: fadeInUp 0.8s 0.4s ease forwards; }
+
+    /* Tactical Game Hover */
+    .card.tactical:hover {
+      transform: translateY(-10px) scale(1.02);
+      border-color: var(--primary);
+      box-shadow: 0 20px 40px rgba(0,0,0,0.8), 0 0 20px var(--primary-glow);
+    }
+    
+    /* Science Lab Hover */
+    .card.science:hover {
+      transform: translateY(-10px) scale(1.02);
+      border-color: var(--sci-primary);
+      box-shadow: 0 20px 40px rgba(0,0,0,0.8), 0 0 20px var(--sci-glow);
+    }
+
+    .card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0; height: 4px;
+      background: var(--text-muted);
+      transition: background 0.3s ease;
+    }
+
+    .card.tactical::before { background: var(--primary); }
+    .card.science::before { background: var(--sci-primary); }
+
+    .tag {
+      display: inline-block;
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 20px;
+    }
+
+    .card.tactical .tag {
+      background: rgba(246, 192, 21, 0.1);
+      color: var(--primary);
+      border: 1px solid rgba(246, 192, 21, 0.2);
+    }
+
+    .card.science .tag {
+      background: rgba(14, 165, 233, 0.1);
+      color: var(--sci-primary);
+      border: 1px solid rgba(14, 165, 233, 0.2);
+    }
+
+    .card h2 {
+      font-size: 1.8rem;
+      margin-bottom: 15px;
+      font-weight: 700;
+    }
+
+    .card p {
+      color: var(--text-muted);
+      line-height: 1.6;
+      font-size: 1rem;
+      margin-bottom: 30px;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 600;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      transition: gap 0.3s ease;
+    }
+
+    .card.tactical .btn { color: var(--primary); }
+    .card.science .btn { color: var(--sci-primary); }
+
+    .card:hover .btn {
+      gap: 15px;
+    }
+
+    /* Keyframes */
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(30px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes fadeInDown {
+      from { opacity: 0; transform: translateY(-30px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .grid { flex-direction: column; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="bg-grid"></div>
+
+  <header>
+    <h1>Select Experience</h1>
+    <div class="subtitle">Choose your module to launch</div>
+  </header>
+
+  <div class="grid">
+    
+    <!-- Game 1: CS:GO Shooter -->
+    <a href="shooter.html" class="card tactical">
+      <div class="tag">FPS Action</div>
+      <h2>CS:GO Math Shooter 3D</h2>
+      <p>A fast-paced, fully 3D tactical shooter. Survive incoming enemies, hit your kill targets to win, and defuse the bomb using rapid math sequences to revive falling teammates.</p>
+      <div class="btn">
+        Launch Game
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+      </div>
+    </a>
+
+    <!-- Game 2: Science Lab -->
+    <a href="ion/ion/coverage/index.html" class="card science">
+      <div class="tag">Education</div>
+      <h2>Science Lab: Ionic Swap</h2>
+      <p>An interactive chemistry tutorial & lab. Learn double displacement reactions through animated ion exchanges, visual exception rules, and test your knowledge in the final quiz.</p>
+      <div class="btn">
+        Start Module
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+      </div>
+    </a>
+
+  </div>
+
+</body>
+</html>

@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>CS:GO Math Shooter 3D</title>
+  <style>
+    :root { --primary: #f6c015; --danger: #d93d3d; }
+    body { margin:0; overflow:hidden; background:#000; user-select:none; font-family:Arial,sans-serif; }
+    canvas { display:block; cursor:none; }
+
+    #crosshair {
+      position:absolute; top:50%; left:50%;
+      width:20px; height:20px;
+      transform:translate(-50%,-50%);
+      pointer-events:none; z-index:10;
+    }
+    #crosshair::before, #crosshair::after {
+      content:''; position:absolute; background:#0f0;
+    }
+    #crosshair::before { top:9px; left:0; width:20px; height:2px; }
+    #crosshair::after  { top:0; left:9px; width:2px; height:20px; }
+
+    #hud {
+      position:absolute; bottom:20px; left:20px; right:20px;
+      display:flex; justify-content:space-between;
+      color:var(--primary); font-family:Impact,sans-serif;
+      font-size:2rem; text-shadow:2px 2px 0 #000;
+      pointer-events:none; z-index:10;
+    }
+    .hud-box { background:rgba(0,0,0,.5); padding:10px 20px; border-left:5px solid var(--primary); }
+    #targetBox { border-left-color:#fff; color:#fff; }
+
+    .menu-screen {
+      position:absolute; top:0; left:0; width:100%; height:100%;
+      background:rgba(0,0,0,.8); display:flex; flex-direction:column;
+      justify-content:center; align-items:center; color:#fff; z-index:20; text-align:center;
+    }
+    #instructions { cursor:pointer; }
+
+    .panel {
+      background:rgba(20,20,20,.95); border:2px solid #333;
+      padding:40px; border-top:5px solid var(--primary);
+      box-shadow:0 10px 40px rgba(0,0,0,.9); width:400px;
+    }
+    h1 { margin-top:0; font-family:Impact,sans-serif; letter-spacing:2px; font-size:3rem; }
+    h1.danger { color:var(--danger); }
+    h1.primary { color:var(--primary); }
+
+    #q { font-size:3.5rem; font-weight:bold; margin:20px 0; color:#fff; }
+    input[type="number"] {
+      width:100%; box-sizing:border-box; padding:15px; font-size:2rem;
+      text-align:center; background:#111; border:2px solid #555; color:#fff; outline:none;
+    }
+    input[type="number"]:focus { border-color:var(--primary); }
+    input[type=number]::-webkit-inner-spin-button,
+    input[type=number]::-webkit-outer-spin-button { -webkit-appearance:none; margin:0; }
+
+    .btn {
+      margin-top:20px; padding:15px 30px; background:var(--primary);
+      color:#000; border:none; font-family:Impact,sans-serif;
+      font-size:1.5rem; cursor:pointer; text-transform:uppercase;
+    }
+    .btn:hover { background:#fff; }
+    #prog { margin-top:15px; font-size:1.2rem; color:#888; }
+
+    .flash { color:#ff4d4d; animation:pulse 1s infinite alternate; font-weight:bold; }
+    @keyframes pulse { from{opacity:1} to{opacity:.4} }
+
+    #vignette {
+      position:absolute; top:0; left:0; width:100%; height:100%;
+      pointer-events:none; z-index:5; transition:box-shadow .15s;
+    }
+    .hit { box-shadow:inset 0 0 120px rgba(255,0,0,.75) !important; }
+  </style>
+
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "/lib/three.module.js"
+    }
+  }
+  </script>
+</head>
+<body>
+
+<div id="crosshair"></div>
+<div id="vignette"></div>
+
+<div id="hud">
+  <div class="hud-box">HP: <span id="livesDisplay">2</span></div>
+  <div id="targetBox" class="hud-box">TARGET: <span id="targetDisplay">0</span></div>
+  <div class="hud-box" style="border-left-color:#ff4d4d">KILLS: <span id="killsDisplay">0</span></div>
+</div>
+
+<div id="instructions" class="menu-screen" style="cursor:pointer;">
+  <div class="panel">
+    <h1 class="primary">MISSION START</h1>
+    <p style="font-size:1.2rem; color:#aaa;">
+      <b>W A S D</b> = Move &nbsp;|&nbsp; <b>Mouse</b> = Look &nbsp;|&nbsp; <b>Click</b> = Shoot<br><br>
+      Reach the target kill count to win.<br>
+      On death, solve 4 math problems to respawn.
+    </p>
+    <p style="font-size:1.5rem; color:#fff; margin-top:20px;">CLICK ANYWHERE TO ENTER</p>
+  </div>
+</div>
+
+<div id="mathUI" class="menu-screen" style="display:none;">
+  <div class="panel">
+    <h1 class="primary">OVERRIDE REQUIRED</h1>
+    <div class="flash">BOMB PLANTED — ENTER CODES SEQUENTIALLY:</div>
+    <p id="q"></p>
+    <input id="ans" type="number" placeholder="Answer" autocomplete="off">
+    <p id="prog">0 / 4 Sequences</p>
+  </div>
+</div>
+
+<div id="endUI" class="menu-screen" style="display:none;">
+  <div class="panel">
+    <h1 id="endTitle" class="danger">TERRORISTS WIN</h1>
+    <p style="font-size:1.2rem; margin:20px 0; color:#aaa;">
+      Final Kills: <span id="finalScore" style="color:#fff;"></span>
+    </p>
+    <button class="btn" onclick="location.reload()">NEW MATCH</button>
+  </div>
+</div>
+
+<script type="module">
+import * as THREE from 'three';
+
+// ── GAME STATE ──────────────────────────────────────────────────────────────
+let lives = 2, kills = 0;
+const targetKills = Math.floor(Math.random() * 20) + 21;
+let isDead = false, gameWon = false;
+let respawnsAllowed = 1;
+let mathIndex = 0, answer = 0;
+let damageCooldown = 0;
+let locked = false; // pointer lock active?
+
+document.getElementById('targetDisplay').innerText = targetKills;
+
+// ── RENDERER ────────────────────────────────────────────────────────────────
+const renderer = new THREE.WebGLRenderer({ antialias: false, powerPreference: 'high-performance' });
+renderer.setPixelRatio(1);                    // always 1:1, no supersampling
+renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.shadowMap.enabled = false;
+document.body.appendChild(renderer.domElement);
+
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0xccb997);
+scene.fog = new THREE.FogExp2(0xccb997, 0.022);
+
+const camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.3, 100);
+
+// ── MANUAL POINTER LOCK + CAMERA LOOK ──────────────────────────────────────
+// Using raw Euler angles updated directly on mousemove — zero latency.
+let yaw = 0;
+  let pitch = 0;
+const SENSITIVITY = 0.0020;
+const MAX_PITCH = Math.PI / 2 - 0.01;
+
+// Set rotation order ONCE here — setting it every frame triggers expensive matrix recalcs
+camera.rotation.order = 'YXZ';
+
+const canvas = renderer.domElement;
+// Allow click anywhere on page to start
+function tryLock() {
+  if (!isDead && !gameWon && !locked) canvas.requestPointerLock();
+}
+canvas.addEventListener('click', tryLock);
+document.getElementById('instructions').addEventListener('click', tryLock);
+
+document.addEventListener('pointerlockchange', () => {
+  locked = document.pointerLockElement === canvas;
+  document.getElementById('instructions').style.display =
+    (!locked && !isDead && !gameWon) ? 'flex' : 'none';
+});
+
+// Accumulate raw mouse deltas — use getCoalescedEvents() to recover all
+// intermediate samples Chrome discards when batching mousemove events
+let mouseDX = 0, mouseDY = 0;
+
+document.addEventListener('mousemove', (e) => {
+  if (!locked || isDead || gameWon) return;
+  // getCoalescedEvents recovers every raw hardware sample in this batch
+  const events = e.getCoalescedEvents ? e.getCoalescedEvents() : [e];
+  for (const ce of events) {
+    mouseDX += ce.movementX;
+    mouseDY += ce.movementY;
+  }
+});
+
+// ── LIGHTING ────────────────────────────────────────────────────────────────
+scene.add(new THREE.AmbientLight(0xffffff, 0.7));
+const sun = new THREE.DirectionalLight(0xffffff, 0.5);
+sun.position.set(-10, 30, 10);
+scene.add(sun);
+
+// ── ENVIRONMENT ─────────────────────────────────────────────────────────────
+// All MeshBasicMaterial — zero per-fragment lighting cost
+const floor = new THREE.Mesh(
+  new THREE.PlaneGeometry(140, 140),
+  new THREE.MeshBasicMaterial({ color: 0xa99b79 })
+);
+floor.rotation.x = -Math.PI / 2;
+scene.add(floor);
+
+const BOX_GEO = new THREE.BoxGeometry(4,4,4);
+const BOX_MAT = new THREE.MeshBasicMaterial({color:0x8a7b5d});
+for (let i = 0; i < 12; i++) {
+  const b = new THREE.Mesh(BOX_GEO, BOX_MAT);
+  b.position.set((Math.random()-.5)*80, 2, (Math.random()-.5)*80);
+  if (Math.hypot(b.position.x, b.position.z) > 12) scene.add(b);
+}
+
+// ── SHARED ENEMY ASSETS (created once, referenced by all instances) ─────────
+const M = {
+  vest  : new THREE.MeshBasicMaterial({color:0x78350f}),
+  head  : new THREE.MeshBasicMaterial({color:0x451a03}),
+  pants : new THREE.MeshBasicMaterial({color:0xb45309}),
+  eyes  : new THREE.MeshBasicMaterial({color:0xfcd34d}),
+  hb    : new THREE.MeshBasicMaterial({visible:false}),
+  blood : new THREE.MeshBasicMaterial({color:0x7f0000}),
+};
+const G = {
+  torso : new THREE.BoxGeometry(1.2,1.5,0.8),
+  head  : new THREE.BoxGeometry(0.8,0.8,0.8),
+  eyes  : new THREE.PlaneGeometry(0.5,0.2),
+  leg   : new THREE.BoxGeometry(0.5,1.5,0.5),
+  arm   : new THREE.BoxGeometry(0.4,1.4,0.4),
+  hb    : new THREE.BoxGeometry(1.5,4,1.5),
+  blood : new THREE.BoxGeometry(0.15,0.15,0.15),
+};
+
+// ── ENEMIES ─────────────────────────────────────────────────────────────────
+const enemies  = [];
+const hitBoxes = [];
+const MAX_ENEMIES = 10;
+
+function spawnEnemy() {
+  if (isDead || gameWon || enemies.length >= MAX_ENEMIES) return;
+  const g = new THREE.Group();
+
+  const torso = new THREE.Mesh(G.torso, M.vest);  torso.position.y = 2.25; g.add(torso);
+  const head  = new THREE.Mesh(G.head,  M.head);  head.position.y  = 3.4;  g.add(head);
+  const eyes  = new THREE.Mesh(G.eyes,  M.eyes);  eyes.position.set(0, 3.4, 0.41); g.add(eyes);
+  const legL  = new THREE.Mesh(G.leg,   M.pants); legL.position.set(-0.35,0.75,0); g.add(legL);
+  const legR  = new THREE.Mesh(G.leg,   M.pants); legR.position.set( 0.35,0.75,0); g.add(legR);
+  const armL  = new THREE.Mesh(G.arm,   M.pants); armL.position.set(-0.8,2.2,0);   g.add(armL);
+  const armR  = new THREE.Mesh(G.arm,   M.pants); armR.position.set(0.8,2.2,0.2);
+  armR.rotation.x = -Math.PI/3; g.add(armR);
+
+  const a = Math.random() * Math.PI * 2;
+  const d = 25 + Math.random() * 18;
+  g.position.set(Math.cos(a)*d, 0, Math.sin(a)*d);
+  scene.add(g);
+
+  const hb = new THREE.Mesh(G.hb, M.hb);
+  hb.position.set(g.position.x, 2, g.position.z);
+  scene.add(hb);
+  hitBoxes.push(hb);
+
+  enemies.push({ mesh:g, hb, legL, legR, hp:3,
+    speed: 3 + Math.random()*1.5, wobble: Math.random()*10 });
+}
+
+setInterval(spawnEnemy, 2500);
+
+// ── PARTICLES ───────────────────────────────────────────────────────────────
+const particles = [];
+const MAX_PARTICLES = 30;
+
+function spawnBlood(pos) {
+  while (particles.length > MAX_PARTICLES - 4) {
+    scene.remove(particles.shift());
+  }
+  for (let i = 0; i < 4; i++) {
+    const p = new THREE.Mesh(G.blood, M.blood);
+    p.position.copy(pos);
+    p.vx = (Math.random()-.5)*8; p.vy = Math.random()*6+2; p.vz = (Math.random()-.5)*8;
+    p.life = 0.7;
+    scene.add(p); particles.push(p);
+  }
+}
+
+// ── SHOOTING ────────────────────────────────────────────────────────────────
+let audioCtx;
+function playShoot() {
+  if (!audioCtx) audioCtx = new AudioContext();
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+  const o = audioCtx.createOscillator(), g = audioCtx.createGain();
+  o.connect(g); g.connect(audioCtx.destination);
+  o.type = 'sawtooth';
+  o.frequency.setValueAtTime(280, audioCtx.currentTime);
+  o.frequency.exponentialRampToValueAtTime(50, audioCtx.currentTime + 0.08);
+  g.gain.setValueAtTime(0.25, audioCtx.currentTime);
+  g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.08);
+  o.start(); o.stop(audioCtx.currentTime + 0.08);
+}
+
+const raycaster = new THREE.Raycaster();
+raycaster.far = 100;
+const screenCenter = new THREE.Vector2(0, 0);
+
+document.addEventListener('mousedown', (e) => {
+  if (!locked || isDead || gameWon || e.button !== 0) return;
+  playShoot();
+  raycaster.setFromCamera(screenCenter, camera);
+  const hits = raycaster.intersectObjects(hitBoxes);
+  if (!hits.length) return;
+  const hb   = hits[0].object;
+  const eObj = enemies.find(en => en.hb === hb);
+  if (!eObj) return;
+  eObj.hp--;
+  spawnBlood(hits[0].point);
+  if (eObj.hp <= 0) {
+    scene.remove(eObj.mesh); scene.remove(eObj.hb);
+    enemies.splice(enemies.indexOf(eObj), 1);
+    hitBoxes.splice(hitBoxes.indexOf(hb), 1);
+    kills++;
+    document.getElementById('killsDisplay').innerText = kills;
+    if (kills >= targetKills) triggerWin();
+  }
+});
+
+// ── DAMAGE ──────────────────────────────────────────────────────────────────
+function takeDamage() {
+  if (damageCooldown > 0) return;
+  damageCooldown = 1.2;
+  lives--;
+  document.getElementById('livesDisplay').innerText = lives;
+  const v = document.getElementById('vignette');
+  v.classList.add('hit');
+  setTimeout(() => v.classList.remove('hit'), 250);
+
+  for (let i = enemies.length - 1; i >= 0; i--) {
+    const dx = enemies[i].mesh.position.x - camera.position.x;
+    const dz = enemies[i].mesh.position.z - camera.position.z;
+    if (dx*dx + dz*dz < 144) {
+      scene.remove(enemies[i].mesh); scene.remove(enemies[i].hb);
+      hitBoxes.splice(hitBoxes.indexOf(enemies[i].hb), 1);
+      enemies.splice(i, 1);
+    }
+  }
+  if (lives <= 0) respawnsAllowed > 0 ? triggerDeath() : gameOverFail();
+}
+
+// ── MATH ────────────────────────────────────────────────────────────────────
+function genMath() {
+  let q;
+  if      (mathIndex===0){ const a=~~(Math.random()*20)+1, b=~~(Math.random()*20)+1; answer=a+b; q=`${a} + ${b} = ?`; }
+  else if (mathIndex===1){ const a=~~(Math.random()*15)+15, b=~~(Math.random()*14)+1; answer=a-b; q=`${a} - ${b} = ?`; }
+  else if (mathIndex===2){ const a=~~(Math.random()*11)+2, b=~~(Math.random()*11)+2; answer=a*b; q=`${a} × ${b} = ?`; }
+  else                   { const b=~~(Math.random()*9)+2, c=~~(Math.random()*9)+2; answer=c; q=`${b*c} ÷ ${b} = ?`; }
+  document.getElementById('q').innerText = q;
+  const inp = document.getElementById('ans'); inp.value=''; inp.focus();
+}
+
+function triggerDeath() {
+  isDead=true; document.exitPointerLock(); locked=false;
+  mathIndex=0; document.getElementById('prog').innerText='0 / 4 Sequences';
+  document.getElementById('mathUI').style.display='flex'; genMath();
+}
+function triggerWin() {
+  gameWon=true; document.exitPointerLock(); locked=false;
+  document.getElementById('endTitle').innerText='COUNTER-TERRORISTS WIN';
+  document.getElementById('endTitle').style.color='#10b981';
+  document.getElementById('finalScore').innerText=kills;
+  document.getElementById('endUI').style.display='flex';
+}
+function gameOverFail() {
+  document.getElementById('mathUI').style.display='none';
+  document.getElementById('endTitle').innerText='TERRORISTS WIN';
+  document.getElementById('endTitle').style.color='#d93d3d';
+  document.getElementById('finalScore').innerText=kills;
+  document.getElementById('endUI').style.display='flex';
+}
+
+document.getElementById('ans').addEventListener('keydown', (e) => {
+  if (e.key !== 'Enter') return;
+  const val = parseInt(e.target.value);
+  if (val === answer) {
+    e.target.style.borderColor='#10b981';
+    mathIndex++;
+    document.getElementById('prog').innerText=`${mathIndex} / 4 Sequences`;
+    setTimeout(() => {
+      e.target.style.borderColor='#555';
+      if (mathIndex >= 4) {
+        lives=2; respawnsAllowed--;
+        document.getElementById('livesDisplay').innerText=lives;
+        document.getElementById('mathUI').style.display='none';
+        isDead=false;
+        camera.position.set(0,2,0); yaw=0; pitch=0;
+        camera.rotation.set(0,0,0,'YXZ');
+        canvas.requestPointerLock();
+      } else genMath();
+    }, 300);
+  } else {
+    e.target.style.borderColor='#ff4d4d';
+    setTimeout(() => { e.target.style.borderColor='#555'; genMath(); }, 500);
+  }
+});
+
+// ── PLAYER STATE ─────────────────────────────────────────────────────────────
+const keys = {};
+document.addEventListener('keydown', e => { keys[e.code]=true; });
+document.addEventListener('keyup',   e => { keys[e.code]=false; });
+
+camera.position.set(0, 2, 5);
+
+// ── RESIZE ───────────────────────────────────────────────────────────────────
+window.addEventListener('resize', () => {
+  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+});
+
+// ── GAME LOOP ────────────────────────────────────────────────────────────────
+let prevTime = performance.now();
+
+// Forward vector (reused, no allocation in loop)
+const fwd  = new THREE.Vector3();
+const right = new THREE.Vector3();
+
+function loop() {
+  requestAnimationFrame(loop);
+  const now = performance.now();
+  const dt  = Math.min((now - prevTime) / 1000, 0.05);
+  prevTime  = now;
+
+  if (damageCooldown > 0) damageCooldown -= dt;
+
+  // ── Apply all accumulated mouse samples this frame ──
+  if (locked && !isDead && !gameWon && (mouseDX !== 0 || mouseDY !== 0)) {
+    yaw   -= mouseDX * SENSITIVITY;
+    pitch -= mouseDY * SENSITIVITY;
+    pitch  = Math.max(-MAX_PITCH, Math.min(MAX_PITCH, pitch));
+    camera.rotation.y = yaw;
+    camera.rotation.x = pitch;
+    mouseDX = 0;
+    mouseDY = 0;
+  }
+
+  // ── Movement (direction derived from raw yaw, independent of camera pitch) ──
+  if (locked && !isDead && !gameWon) {
+    const spd = 18 * dt;
+    fwd.set(-Math.sin(yaw), 0, -Math.cos(yaw));
+    right.set(Math.cos(yaw), 0, -Math.sin(yaw));
+
+    if (keys['KeyW']) camera.position.addScaledVector(fwd, spd);
+    if (keys['KeyS']) camera.position.addScaledVector(fwd, -spd);
+    if (keys['KeyD']) camera.position.addScaledVector(right, spd);
+    if (keys['KeyA']) camera.position.addScaledVector(right, -spd);
+    camera.position.y = 2; // keep on ground
+  }
+
+  // ── Enemy AI ──────────────────────────────────────────────────────────────
+  if (!isDead && !gameWon) {
+    const px = camera.position.x, pz = camera.position.z;
+    for (let i = 0; i < enemies.length; i++) {
+      const e = enemies[i];
+      const mx = e.mesh.position.x, mz = e.mesh.position.z;
+      const dx = px-mx, dz = pz-mz;
+      const dist2 = dx*dx + dz*dz;
+
+      e.mesh.lookAt(px, 0, pz);
+      if (dist2 > 6.25) {                    // > 2.5 metres
+        const inv = e.speed * dt / Math.sqrt(dist2);
+        e.mesh.position.x += dx*inv;
+        e.mesh.position.z += dz*inv;
+      } else {
+        takeDamage();
+      }
+
+      e.hb.position.x = e.mesh.position.x;
+      e.hb.position.z = e.mesh.position.z;
+      e.hb.position.y = 2;
+
+      e.wobble += 10*dt;
+      e.legL.rotation.x =  Math.sin(e.wobble)*0.4;
+      e.legR.rotation.x = -Math.sin(e.wobble)*0.4;
+    }
+  }
+
+  // ── Particles ─────────────────────────────────────────────────────────────
+  for (let i = particles.length-1; i >= 0; i--) {
+    const p = particles[i];
+    p.position.x += p.vx*dt;
+    p.position.y += p.vy*dt;
+    p.position.z += p.vz*dt;
+    p.vy -= 22*dt;
+    p.life -= dt;
+    if (p.position.y < 0.05) { p.position.y=0.05; p.vx=p.vy=p.vz=0; }
+    p.scale.setScalar(Math.max(p.life, 0.01));
+    if (p.life <= 0) { scene.remove(p); particles.splice(i,1); }
+  }
+
+  renderer.render(scene, camera);
+}
+
+loop();
+</script>
+</body>
+</html>

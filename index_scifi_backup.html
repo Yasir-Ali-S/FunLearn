@@ -1,0 +1,634 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Math Shooter ULTRA</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Inter:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --primary: #10b981; /* emerald-500 */
+    --primary-glow: rgba(16, 185, 129, 0.6);
+    --bg-dark: #020617; /* slate-950 */
+    --panel-bg: rgba(15, 23, 42, 0.7);
+    --panel-border: rgba(255, 255, 255, 0.1);
+    --text-main: #f8fafc;
+    --danger: #ef4444;
+  }
+  body { 
+    margin: 0; 
+    overflow: hidden; 
+    background: var(--bg-dark); 
+    font-family: 'Inter', sans-serif;
+    color: var(--text-main);
+    user-select: none;
+  }
+  canvas { 
+    display: block; 
+    cursor: crosshair; 
+  }
+
+  /* Glassmorphism UI Base */
+  .glass-panel {
+    background: var(--panel-bg);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid var(--panel-border);
+    border-radius: 16px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+  }
+
+  #ui {
+    position: absolute; 
+    top: 20px; 
+    left: 20px;
+    padding: 15px 25px;
+    font-size: 18px;
+    font-family: 'Orbitron', sans-serif;
+    font-weight: 700;
+    letter-spacing: 1px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  
+  .ui-stat {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .stat-value {
+    color: var(--primary);
+    text-shadow: 0 0 10px var(--primary-glow);
+  }
+
+  #mathUI, #gameOver {
+    position: absolute; 
+    top: 50%; 
+    left: 50%;
+    transform: translate(-50%, -50%) scale(0.9);
+    padding: 40px;
+    display: none;
+    text-align: center;
+    min-width: 320px;
+    opacity: 0;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  #mathUI.active, #gameOver.active {
+    display: block;
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+
+  h1, h2 {
+    margin-top: 0;
+    font-family: 'Orbitron', sans-serif;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+  }
+
+  h1 { color: var(--danger); text-shadow: 0 0 15px rgba(239, 68, 68, 0.6); font-size: 2rem; }
+  h2 { color: var(--primary); text-shadow: 0 0 15px var(--primary-glow); }
+
+  #q {
+    font-size: 2.5rem;
+    font-family: 'Orbitron', sans-serif;
+    margin: 20px 0;
+    font-weight: 700;
+  }
+
+  input[type="number"] {
+    width: 80%;
+    padding: 15px;
+    font-size: 1.5rem;
+    text-align: center;
+    background: rgba(0,0,0,0.3);
+    border: 2px solid rgba(255,255,255,0.2);
+    border-radius: 8px;
+    color: white;
+    font-family: 'Orbitron', sans-serif;
+    outline: none;
+    transition: all 0.2s;
+  }
+
+  input[type="number"]:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 15px var(--primary-glow);
+  }
+  
+  /* Input spinners hidden */
+  input[type=number]::-webkit-inner-spin-button, 
+  input[type=number]::-webkit-outer-spin-button { 
+    -webkit-appearance: none; 
+    margin: 0; 
+  }
+
+  button {
+    margin-top: 20px;
+    padding: 15px 30px;
+    background: linear-gradient(135deg, #10b981, #059669);
+    color: white;
+    border: none;
+    font-family: 'Orbitron', sans-serif;
+    font-weight: 700;
+    font-size: 1.1rem;
+    letter-spacing: 1px;
+    cursor: pointer;
+    border-radius: 8px;
+    transition: all 0.2s;
+    box-shadow: 0 4px 15px rgba(16, 185, 129, 0.4);
+    text-transform: uppercase;
+  }
+
+  button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(16, 185, 129, 0.6);
+    background: linear-gradient(135deg, #34d399, #10b981);
+  }
+
+  button:active {
+    transform: translateY(1px);
+  }
+
+  #prog {
+    margin-top: 15px;
+    font-size: 1.2rem;
+    color: #94a3b8;
+  }
+</style>
+</head>
+<body>
+
+<div id="ui" class="glass-panel">
+  <div class="ui-stat">
+    <span>SCORE:</span> <span id="score" class="stat-value">0</span>
+  </div>
+  <div class="ui-stat">
+    <span>LIVES:</span> <span id="lives" class="stat-value">2</span>
+  </div>
+</div>
+
+<div id="mathUI" class="glass-panel">
+  <h2>SYSTEM OVERRIDE</h2>
+  <p id="q"></p>
+  <input id="ans" type="number" placeholder="Enter Answer" autocomplete="off">
+  <br>
+  <button onclick="check()">Initialize</button>
+  <p id="prog">0/2 Sequences</p>
+</div>
+
+<div id="gameOver" class="glass-panel">
+  <h1>MISSION FAILED</h1>
+  <p style="font-size: 1.2rem; margin: 20px 0; color: #94a3b8;">Final Score: <span id="finalScore" class="stat-value"></span></p>
+  <button onclick="location.reload()">Reboot System</button>
+</div>
+
+<canvas id="c"></canvas>
+
+<script>
+const canvas = document.getElementById("c");
+const ctx = canvas.getContext("2d");
+
+function resize() {
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+}
+window.addEventListener('resize', resize);
+resize();
+
+let player={x:canvas.width/2,y:canvas.height/2,size:15, angle: 0};
+let bullets=[], enemies=[], particles=[], stars=[];
+let keys={}, paused=false;
+let score=0, lives=2;
+let correct=0, answer=0;
+let mouse={x:0,y:0};
+
+// Background stars
+for(let i=0; i<100; i++) {
+  stars.push({
+    x: Math.random() * canvas.width,
+    y: Math.random() * canvas.height,
+    size: Math.random() * 2,
+    speed: Math.random() * 0.5 + 0.1
+  });
+}
+
+document.addEventListener("mousemove",e=>{
+ mouse.x=e.clientX;
+ mouse.y=e.clientY;
+});
+
+document.addEventListener("keydown",e=>keys[e.code]=true);
+document.addEventListener("keyup",e=>keys[e.code]=false);
+document.addEventListener("mousedown",shoot);
+
+// Enter key for math submission
+document.getElementById("ans").addEventListener("keydown", function(e) {
+  if(e.key === "Enter") {
+    e.preventDefault();
+    check();
+  }
+});
+
+// Sound
+let audioCtx;
+function playShoot(){
+  if(!audioCtx) {
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  }
+  if(audioCtx.state === 'suspended') {
+     audioCtx.resume();
+  }
+  let osc=audioCtx.createOscillator();
+  let gain=audioCtx.createGain();
+  osc.connect(gain);
+  gain.connect(audioCtx.destination);
+  
+  osc.type = 'square';
+  osc.frequency.setValueAtTime(400, audioCtx.currentTime);
+  osc.frequency.exponentialRampToValueAtTime(100, audioCtx.currentTime + 0.1);
+  
+  gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+  gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
+  
+  osc.start();
+  osc.stop(audioCtx.currentTime+0.1);
+}
+
+function shoot(e){
+ if(paused) return;
+ if(e.target.closest('.glass-panel')) return; // Don't shoot if clicking UI
+ playShoot();
+ 
+ let angle=Math.atan2(mouse.y-player.y,mouse.x-player.x);
+ let gunX = player.x + Math.cos(angle)*15;
+ let gunY = player.y + Math.sin(angle)*15;
+ 
+ bullets.push({x:gunX,y:gunY,vx:Math.cos(angle)*12,vy:Math.sin(angle)*12});
+ 
+ for(let count=0; count<3; count++) {
+   particles.push({
+      x:gunX, y:gunY,
+      vx:(Math.random()-0.5)*2 + Math.cos(angle)*2,
+      vy:(Math.random()-0.5)*2 + Math.sin(angle)*2,
+      life: 10,
+      color: "#10b981"
+   });
+ }
+}
+
+function spawnEnemy(){
+ if(paused) return;
+
+ let side=Math.floor(Math.random()*4);
+ let x,y;
+
+ if(side===0){x=Math.random()*canvas.width;y=-40;}
+ else if(side===1){x=Math.random()*canvas.width;y=canvas.height+40;}
+ else if(side===2){x=-40;y=Math.random()*canvas.height;}
+ else {x=canvas.width+40;y=Math.random()*canvas.height;}
+
+ enemies.push({
+  x, y, 
+  size: 16, 
+  speed: 1+Math.random()*1.5, 
+  hp: 2,
+  wobble: Math.random() * Math.PI*2 // For walking animation
+ });
+}
+setInterval(spawnEnemy,1200);
+
+setInterval(()=>{
+ enemies.forEach(e=>e.speed+=0.05);
+},6000);
+
+function genMath(){
+ let a=Math.floor(Math.random()*12)+1;
+ let b=Math.floor(Math.random()*12)+1;
+ answer=a+b;
+ document.getElementById("q").innerText=`${a} + ${b} = ?`;
+ document.getElementById("ans").value = "";
+ document.getElementById("ans").focus();
+}
+
+function triggerMath(){
+ paused=true;
+ correct=0;
+ keys = {}; // reset keys
+ document.getElementById("prog").innerText="0/2 Sequences";
+ 
+ const ui = document.getElementById("mathUI");
+ ui.style.display="block";
+ // Trigger reflow
+ void ui.offsetWidth;
+ ui.classList.add("active");
+ 
+ genMath();
+}
+
+function check(){
+ let ansInput = document.getElementById("ans");
+ let val=parseInt(ansInput.value);
+ if(val===answer){
+  correct++;
+  document.getElementById("prog").innerText=correct+"/2 Sequences";
+  
+  // Flash correct
+  ansInput.style.borderColor = "#10b981";
+  ansInput.style.boxShadow = "0 0 15px rgba(16, 185, 129, 0.8)";
+  
+  setTimeout(() => {
+    ansInput.style.borderColor = "";
+    ansInput.style.boxShadow = "";
+    if(correct>=2){
+      resumeGame();
+    } else {
+      genMath();
+    }
+  }, 200);
+ } else {
+  // Flash incorrect
+  ansInput.style.borderColor = "#ef4444";
+  ansInput.style.boxShadow = "0 0 15px rgba(239, 68, 68, 0.8)";
+  ansInput.value = "";
+  
+  setTimeout(() => {
+    ansInput.style.borderColor = "";
+    ansInput.style.boxShadow = "";
+    genMath();
+  }, 400);
+ }
+}
+
+function resumeGame() {
+  const ui = document.getElementById("mathUI");
+  ui.classList.remove("active");
+  setTimeout(() => {
+    ui.style.display="none";
+    paused=false;
+    // Clear enemies closer than a certain radius to prevent instant death
+    enemies = enemies.filter(e => Math.hypot(player.x-e.x, player.y-e.y) > 200);
+  }, 300);
+}
+
+function update(){
+ if(paused) return;
+
+ let speed = 5;
+ if(keys['KeyW']) player.y-=speed;
+ if(keys['KeyS']) player.y+=speed;
+ if(keys['KeyA']) player.x-=speed;
+ if(keys['KeyD']) player.x+=speed;
+
+ player.x=Math.max(player.size,Math.min(canvas.width-player.size,player.x));
+ player.y=Math.max(player.size,Math.min(canvas.height-player.size,player.y));
+ 
+ player.angle = Math.atan2(mouse.y-player.y, mouse.x-player.x);
+
+ // move stars
+ stars.forEach(s => {
+    s.y += s.speed;
+    if(s.y > canvas.height) {
+        s.y = 0; s.x = Math.random() * canvas.width;
+    }
+ });
+
+ // bullets
+ for(let i=bullets.length-1;i>=0;i--){
+  let b=bullets[i];
+  b.x+=b.vx; b.y+=b.vy;
+  
+  // trail particle
+  if(Math.random()>0.5){
+     particles.push({x:b.x, y:b.y, vx:0, vy:0, life:5, color:'#34d399'});
+  }
+
+  if(b.x<0||b.x>canvas.width||b.y<0||b.y>canvas.height){
+    bullets.splice(i,1);
+  }
+ }
+
+ // enemies
+ for(let i=enemies.length-1;i>=0;i--){
+  let e=enemies[i];
+
+  let angle=Math.atan2(player.y-e.y,player.x-e.x);
+  e.angle = angle;
+  e.x+=Math.cos(angle)*e.speed;
+  e.y+=Math.sin(angle)*e.speed;
+  e.wobble += 0.2 * e.speed; // walking speed
+
+  if(Math.hypot(player.x-e.x,player.y-e.y)<player.size+e.size){
+    enemies.splice(i,1);
+    lives--;
+    document.getElementById("lives").innerText=lives;
+
+    // big player explosion
+    for(let k=0;k<30;k++){
+      particles.push({
+        x:player.x,y:player.y,
+        vx:(Math.random()-0.5)*10,
+        vy:(Math.random()-0.5)*10,
+        life:40,
+        color:"#10b981"
+      });
+    }
+
+    if(lives<=0){
+      document.getElementById("finalScore").innerText=score;
+      const go = document.getElementById("gameOver");
+      go.style.display="block";
+      void go.offsetWidth;
+      go.classList.add("active");
+      paused=true;
+    }
+    else triggerMath();
+  }
+
+  for(let j=bullets.length-1;j>=0;j--){
+    let b=bullets[j];
+    if(Math.hypot(b.x-e.x,b.y-e.y)<e.size*1.5){
+      e.hp--;
+      
+      // Hit particles
+      for(let k=0;k<5;k++){
+        particles.push({
+          x:b.x,y:b.y,
+          vx:(Math.random()-0.5)*6,
+          vy:(Math.random()-0.5)*6,
+          life:15,
+          color:"yellow"
+        });
+      }
+      
+      bullets.splice(j,1);
+
+      if(e.hp<=0){
+        // Death explosion
+        for(let k=0;k<15;k++){
+          particles.push({
+            x:e.x,y:e.y,
+            vx:(Math.random()-0.5)*8,
+            vy:(Math.random()-0.5)*8,
+            life:25,
+            color:"#ef4444"
+          });
+        }
+        enemies.splice(i,1);
+        score+=10;
+        document.getElementById("score").innerText=score;
+      }
+      break;
+    }
+  }
+ }
+
+ // particles
+ for(let i=particles.length-1;i>=0;i--){
+  let p=particles[i];
+  p.x+=p.vx; p.y+=p.vy;
+  p.life--;
+  if(p.life<=0) particles.splice(i,1);
+ }
+}
+
+function drawHumanoid(x, y, angle, color, isPlayer, wobble=0) {
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.rotate(angle);
+  
+  // shadow for depth
+  ctx.shadowBlur = 10;
+  ctx.shadowColor = color;
+  
+  // Movement animation
+  let armSwing = Math.sin(wobble) * 4;
+  let legSwing = Math.cos(wobble) * 5;
+
+  ctx.fillStyle = color;
+  
+  // Left arm
+  ctx.beginPath();
+  if(ctx.roundRect) {
+    ctx.roundRect(5, -12 + armSwing, 15, 6, 3);
+  } else {
+    ctx.fillRect(5, -12 + armSwing, 15, 6);
+  }
+  ctx.fill();
+  
+  // Right arm (holding gun if player)
+  ctx.beginPath();
+  if(isPlayer) {
+    if(ctx.roundRect) ctx.roundRect(5, 6, 20, 6, 3);
+    else ctx.fillRect(5, 6, 20, 6);
+  } else {
+    if(ctx.roundRect) ctx.roundRect(5, 6 - armSwing, 15, 6, 3);
+    else ctx.fillRect(5, 6 - armSwing, 15, 6);
+  }
+  ctx.fill();
+
+  // Hands/Gun
+  if(isPlayer) {
+     ctx.fillStyle = "#94a3b8"; // Silver gun
+     ctx.fillRect(20, 7, 10, 4);
+     ctx.fillStyle = "#fcd34d"; // Hand
+     ctx.beginPath(); ctx.arc(20, 9, 3, 0, Math.PI*2); ctx.fill();
+     ctx.beginPath(); ctx.arc(15, -9 + armSwing, 3, 0, Math.PI*2); ctx.fill();
+  } else {
+     ctx.fillStyle = "#fcd34d"; // Hands
+     ctx.beginPath(); ctx.arc(15, -9 + armSwing, 3, 0, Math.PI*2); ctx.fill();
+     ctx.beginPath(); ctx.arc(15, 9 - armSwing, 3, 0, Math.PI*2); ctx.fill();
+  }
+
+  // Torso / Shoulders
+  ctx.fillStyle = (isPlayer) ? "#065f46" : "#7f1d1d"; // Darker base for torso
+  ctx.beginPath();
+  ctx.ellipse(-2, 0, 10, 14, 0, 0, Math.PI*2);
+  ctx.fill();
+
+  // Head
+  ctx.fillStyle = "#fde68a"; // skin tone
+  ctx.beginPath();
+  ctx.arc(0, 0, 7, 0, Math.PI*2);
+  ctx.fill();
+
+  // Visor or helmet detail
+  ctx.fillStyle = (isPlayer) ? "#34d399" : "#f87171"; // Visor
+  ctx.beginPath();
+  ctx.arc(2, 0, 5, -Math.PI/2.5, Math.PI/2.5);
+  ctx.fill();
+
+  ctx.restore();
+}
+
+function draw(){
+ ctx.fillStyle="rgba(2, 6, 23, 0.4)"; // Trail effect
+ ctx.fillRect(0,0,canvas.width,canvas.height);
+
+ // stars
+ ctx.fillStyle = "#334155";
+ stars.forEach(s => {
+    ctx.beginPath();
+    ctx.arc(s.x, s.y, s.size, 0, Math.PI*2);
+    ctx.fill();
+ });
+
+ // Laser aim with glow
+ ctx.save();
+ ctx.shadowBlur = 10;
+ ctx.shadowColor = "rgba(16, 185, 129, 0.8)";
+ ctx.strokeStyle="rgba(16, 185, 129, 0.4)";
+ ctx.lineWidth = 1;
+ ctx.setLineDash([5, 10]);
+ ctx.beginPath();
+ ctx.moveTo(player.x,player.y);
+ ctx.lineTo(mouse.x,mouse.y);
+ ctx.stroke();
+ ctx.restore();
+
+ // player
+ drawHumanoid(player.x, player.y, player.angle, "#10b981", true, 0);
+
+ // enemies
+ enemies.forEach(e=>{
+   drawHumanoid(e.x, e.y, e.angle, "#ef4444", false, e.wobble);
+ });
+
+ // bullets
+ ctx.save();
+ ctx.shadowBlur = 15;
+ ctx.shadowColor = "#fde047";
+ ctx.fillStyle="#fef08a";
+ bullets.forEach(b=>{
+    ctx.beginPath();
+    ctx.arc(b.x, b.y, 3, 0, Math.PI*2);
+    ctx.fill();
+ });
+ ctx.restore();
+
+ // particles
+ particles.forEach(p=>{
+  ctx.save();
+  ctx.globalAlpha = Math.max(0, p.life / 30); // fade out securely
+  ctx.fillStyle = p.color;
+  ctx.shadowBlur = 10;
+  ctx.shadowColor = p.color;
+  ctx.beginPath();
+  ctx.arc(p.x, p.y, Math.random()*2+1, 0, Math.PI*2);
+  ctx.fill();
+  ctx.restore();
+ });
+
+ update();
+ requestAnimationFrame(draw);
+}
+
+// Start game loop
+draw();
+</script>
+
+</body>
+</html>

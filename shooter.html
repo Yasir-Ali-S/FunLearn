@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>CS:GO Math Shooter 3D</title>
+  <link rel="stylesheet" href="shooter.css">
+
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "/lib/three.module.js"
+    }
+  }
+  </script>
+</head>
+<body>
+
+<div id="crosshair"></div>
+<div id="vignette"></div>
+
+<div id="hud">
+  <div class="hud-box">HP: <span id="livesDisplay">2</span></div>
+  <div id="targetBox" class="hud-box">TARGET: <span id="targetDisplay">0</span></div>
+  <div class="hud-box" style="border-left-color:#ff4d4d">KILLS: <span id="killsDisplay">0</span></div>
+</div>
+
+<div id="instructions" class="menu-screen" style="cursor:pointer;">
+  <div class="panel">
+    <h1 class="primary">MISSION START</h1>
+    <p style="font-size:1.2rem; color:#aaa;">
+      <b>W A S D</b> = Move &nbsp;|&nbsp; <b>Mouse</b> = Look &nbsp;|&nbsp; <b>Click</b> = Shoot<br><br>
+      Reach the target kill count to win.<br>
+      On death, solve 4 math problems to respawn.
+    </p>
+    <p style="font-size:1.5rem; color:#fff; margin-top:20px;">CLICK ANYWHERE TO ENTER</p>
+  </div>
+</div>
+
+<div id="mathUI" class="menu-screen" style="display:none;">
+  <div class="panel">
+    <h1 class="primary">OVERRIDE REQUIRED</h1>
+    <div class="flash">BOMB PLANTED — ENTER CODES SEQUENTIALLY:</div>
+    <p id="q"></p>
+    <input id="ans" type="number" placeholder="Answer" autocomplete="off">
+    <p id="prog">0 / 4 Sequences</p>
+  </div>
+</div>
+
+<div id="endUI" class="menu-screen" style="display:none;">
+  <div class="panel">
+    <h1 id="endTitle" class="danger">TERRORISTS WIN</h1>
+    <p style="font-size:1.2rem; margin:20px 0; color:#aaa;">
+      Final Kills: <span id="finalScore" style="color:#fff;"></span>
+    </p>
+    <div style="display:flex; gap:10px; justify-content:center;">
+      <button class="btn" onclick="location.reload()">NEW MATCH</button>
+      <button class="btn" onclick="location.href='index.html'" style="background:#222; color:#fff;">MAIN MENU</button>
+    </div>
+  </div>
+</div>
+
+<script type="module" src="shooter.js"></script>
+</body>
+</html>

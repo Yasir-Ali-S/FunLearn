@@ -1,0 +1,67 @@
+    :root { --primary: #f6c015; --danger: #d93d3d; }
+    body { margin:0; overflow:hidden; background:#000; user-select:none; font-family:Arial,sans-serif; }
+    canvas { display:block; cursor:none; }
+
+    #crosshair {
+      position:absolute; top:50%; left:50%;
+      width:20px; height:20px;
+      transform:translate(-50%,-50%);
+      pointer-events:none; z-index:10;
+    }
+    #crosshair::before, #crosshair::after {
+      content:''; position:absolute; background:#0f0;
+    }
+    #crosshair::before { top:9px; left:0; width:20px; height:2px; }
+    #crosshair::after  { top:0; left:9px; width:2px; height:20px; }
+
+    #hud {
+      position:absolute; bottom:20px; left:20px; right:20px;
+      display:flex; justify-content:space-between;
+      color:var(--primary); font-family:Impact,sans-serif;
+      font-size:2rem; text-shadow:2px 2px 0 #000;
+      pointer-events:none; z-index:10;
+    }
+    .hud-box { background:rgba(0,0,0,.5); padding:10px 20px; border-left:5px solid var(--primary); }
+    #targetBox { border-left-color:#fff; color:#fff; }
+
+    .menu-screen {
+      position:absolute; top:0; left:0; width:100%; height:100%;
+      background:rgba(0,0,0,.8); display:flex; flex-direction:column;
+      justify-content:center; align-items:center; color:#fff; z-index:20; text-align:center;
+    }
+    #instructions { cursor:pointer; }
+
+    .panel {
+      background:rgba(20,20,20,.95); border:2px solid #333;
+      padding:40px; border-top:5px solid var(--primary);
+      box-shadow:0 10px 40px rgba(0,0,0,.9); width:400px;
+    }
+    h1 { margin-top:0; font-family:Impact,sans-serif; letter-spacing:2px; font-size:3rem; }
+    h1.danger { color:var(--danger); }
+    h1.primary { color:var(--primary); }
+
+    #q { font-size:3.5rem; font-weight:bold; margin:20px 0; color:#fff; }
+    input[type="number"] {
+      width:100%; box-sizing:border-box; padding:15px; font-size:2rem;
+      text-align:center; background:#111; border:2px solid #555; color:#fff; outline:none;
+    }
+    input[type="number"]:focus { border-color:var(--primary); }
+    input[type=number]::-webkit-inner-spin-button,
+    input[type=number]::-webkit-outer-spin-button { -webkit-appearance:none; margin:0; }
+
+    .btn {
+      margin-top:20px; padding:15px 30px; background:var(--primary);
+      color:#000; border:none; font-family:Impact,sans-serif;
+      font-size:1.5rem; cursor:pointer; text-transform:uppercase;
+    }
+    .btn:hover { background:#fff; }
+    #prog { margin-top:15px; font-size:1.2rem; color:#888; }
+
+    .flash { color:#ff4d4d; animation:pulse 1s infinite alternate; font-weight:bold; }
+    @keyframes pulse { from{opacity:1} to{opacity:.4} }
+
+    #vignette {
+      position:absolute; top:0; left:0; width:100%; height:100%;
+      pointer-events:none; z-index:5; transition:box-shadow .15s;
+    }
+    .hit { box-shadow:inset 0 0 120px rgba(255,0,0,.75) !important; }
