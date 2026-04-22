@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MARIOMATICS — Super Math Shooter</title>
+  <meta name="description" content="A fun Mario-themed math shooter. Shoot the correct answer block to survive!">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Inter:wght@400;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+  
+  <!-- Import maps polyfill -->
+  <script async src="https://unpkg.com/es-module-shims@1.8.0/dist/es-module-shims.js"></script>
+  
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+        "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+      }
+    }
+  </script>
+</head>
+<body>
+  <div id="game-container">
+    <canvas id="gameCanvas"></canvas>
+
+    <!-- MENU OVERLAY -->
+    <div id="menu-overlay" class="overlay">
+      <div class="menu-content">
+        <div class="title-group">
+          <h1 class="game-title">
+            <span class="title-mario">MARIO</span><span class="title-matics">MATICS</span>
+          </h1>
+          <p class="subtitle">MATH IS YOUR WEAPON</p>
+        </div>
+        <div class="instructions">
+          <div class="key-row"><kbd>←</kbd><kbd>→</kbd> or <kbd>A</kbd><kbd>D</kbd> <span>MOVE</span></div>
+          <div class="key-row"><kbd>SPACE</kbd> <span>SHOOT</span></div>
+        </div>
+        <button id="start-btn" class="glow-btn">
+          <span class="btn-text">START LEVEL</span>
+          <span class="btn-glow"></span>
+        </button>
+        <p class="hint">Shoot the correct answer block to survive</p>
+      </div>
+    </div>
+
+    <!-- GAME OVER OVERLAY -->
+    <div id="gameover-overlay" class="overlay hidden">
+      <div class="menu-content gameover-content">
+        <h1 class="gameover-title">GAME OVER</h1>
+        <div class="stats-grid">
+          <div class="stat-card">
+            <span class="stat-label">SCORE</span>
+            <span class="stat-value" id="final-score">0</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-label">ROUND</span>
+            <span class="stat-value" id="final-round">1</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-label">MAX COMBO</span>
+            <span class="stat-value" id="final-combo">0</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-label">ACCURACY</span>
+            <span class="stat-value" id="final-accuracy">0%</span>
+          </div>
+        </div>
+        <button id="restart-btn" class="glow-btn">
+          <span class="btn-text">PLAY AGAIN</span>
+          <span class="btn-glow"></span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script src="questions.js"></script>
+  <script type="module" src="game.js"></script>
+</body>
+</html>

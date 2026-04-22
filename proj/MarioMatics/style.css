@@ -1,0 +1,252 @@
+/* ═══════════════════════════════════════════════════════════════
+   MARIOMATICS — Global Styles
+   Super Mario aesthetic
+   ═══════════════════════════════════════════════════════════════ */
+
+:root {
+  --mario-red: #e52521;
+  --mario-blue: #049cd8;
+  --mario-green: #43b047;
+  --mario-yellow: #fbd000;
+  --sky-blue: #5c94fc;
+  --bg-deep: var(--sky-blue);
+  --bg-panel: rgba(255, 255, 255, 0.9);
+  --glass: rgba(255, 255, 255, 0.15);
+  --glass-border: rgba(255, 255, 255, 0.4);
+  --text-primary: #ffffff;
+  --text-dim: #f0f0f0;
+  --font-display: 'Press Start 2P', cursive;
+  --font-body: 'Inter', sans-serif;
+}
+
+*, *::before, *::after {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: var(--bg-deep);
+  font-family: var(--font-body);
+  color: var(--text-primary);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── Game Container ─────────────────────────────────────────── */
+#game-container {
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-deep);
+}
+
+#gameCanvas {
+  display: block;
+  background: transparent;
+}
+
+/* ── Overlays ───────────────────────────────────────────────── */
+.overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  background: rgba(92, 148, 252, 0.7); /* Sky blue tint */
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  transition: opacity 0.5s ease, visibility 0.5s ease;
+}
+
+.overlay.hidden {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.menu-content {
+  text-align: center;
+  max-width: 520px;
+  padding: 32px 48px;
+  animation: fadeSlideUp 0.8s ease-out;
+}
+
+@keyframes fadeSlideUp {
+  from { opacity: 0; transform: translateY(30px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ── Title ──────────────────────────────────────────────────── */
+.title-group {
+  margin-bottom: 40px;
+}
+
+.game-title {
+  font-family: var(--font-display);
+  font-size: clamp(1.4rem, 4vw, 2.5rem);
+  line-height: 1.6;
+  margin-bottom: 24px;
+  text-shadow: 4px 4px 0 #000;
+}
+
+.title-mario {
+  color: var(--mario-red);
+}
+
+.title-matics {
+  color: var(--mario-yellow);
+}
+
+.subtitle {
+  font-family: var(--font-display);
+  font-size: 0.65rem;
+  letter-spacing: 4px;
+  color: var(--text-primary);
+  text-transform: uppercase;
+  text-shadow: 2px 2px 0 #000;
+  animation: subtitlePulse 3s ease-in-out infinite;
+}
+
+@keyframes subtitlePulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+}
+
+/* ── Instructions ───────────────────────────────────────────── */
+.instructions {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 36px;
+  padding: 20px 24px;
+  border-radius: 12px;
+  background: rgba(0,0,0,0.5);
+  border: 4px solid var(--mario-yellow);
+}
+
+.key-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-family: var(--font-display);
+  font-size: 0.7rem;
+  color: #fff;
+}
+
+.key-row span {
+  color: var(--mario-yellow);
+  margin-left: 6px;
+  letter-spacing: 2px;
+  font-size: 0.6rem;
+}
+
+kbd {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 36px;
+  height: 32px;
+  padding: 0 10px;
+  font-family: var(--font-display);
+  font-size: 0.6rem;
+  color: #000;
+  background: #fff;
+  border: 2px solid #ccc;
+  border-bottom: 4px solid #999;
+  border-radius: 4px;
+}
+
+/* ── Buttons ────────────────────────────────────────────────── */
+.glow-btn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px 32px;
+  font-family: var(--font-display);
+  font-size: 0.8rem;
+  color: #fff;
+  background: var(--mario-red);
+  border: 4px solid #000;
+  border-radius: 0;
+  cursor: pointer;
+  overflow: hidden;
+  transition: transform 0.1s;
+  margin-bottom: 16px;
+  box-shadow: 4px 4px 0 #000;
+}
+
+.glow-btn:hover {
+  transform: scale(1.05);
+  background: #ff4444;
+}
+
+.glow-btn:active {
+  transform: scale(0.95);
+  box-shadow: 2px 2px 0 #000;
+}
+
+.hint {
+  font-size: 0.9rem;
+  color: #fff;
+  text-shadow: 1px 1px 2px #000;
+  font-weight: 600;
+}
+
+/* ── Game Over ──────────────────────────────────────────────── */
+.gameover-content {
+  max-width: 560px;
+}
+
+.gameover-title {
+  font-family: var(--font-display);
+  font-size: clamp(1.5rem, 4vw, 2.5rem);
+  color: var(--mario-red);
+  text-shadow: 4px 4px 0 #000;
+  margin-bottom: 32px;
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 36px;
+}
+
+.stat-card {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 16px 12px;
+  background: rgba(0,0,0,0.6);
+  border: 4px solid var(--mario-blue);
+}
+
+.stat-label {
+  font-family: var(--font-display);
+  font-size: 0.5rem;
+  color: var(--mario-yellow);
+}
+
+.stat-value {
+  font-family: var(--font-display);
+  font-size: 1.2rem;
+  color: #fff;
+}
+
+/* ── Responsive ─────────────────────────────────────────────── */
+@media (max-width: 600px) {
+  .menu-content { padding: 28px 20px; }
+  .glow-btn { padding: 14px 24px; font-size: 0.7rem; }
+  .stats-grid { gap: 8px; }
+  .stat-card { padding: 12px 8px; border-width: 2px; }
+  .stat-value { font-size: 1rem; }
+}

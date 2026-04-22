@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>CS:GO Math Shooter 3D</title>
+  <link rel="stylesheet" href="shooter.css">
+
+  <!-- Included Three.js from CDN to bypass CORS security policies when double-clicking local file:/// -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
+</head>
+<body>
+
+<div id="sniperScope" style="display:none;"></div>
+<div id="crosshair"></div>
+<div id="vignette"></div>
+<div id="killFeed"></div>
+<div id="pickupPrompt" style="display:none;">PRESS <b>E</b> TO PICK UP MISSILE</div>
+<div id="missileIndicator" style="display:none;">🚀 MISSILE READY — CLICK TO FIRE</div>
+
+<!-- Directional Damage Markers -->
+<div id="damageOverlay">
+  <div class="dmg-marker" id="dmg-top"></div>
+  <div class="dmg-marker" id="dmg-right"></div>
+  <div class="dmg-marker" id="dmg-bottom"></div>
+  <div class="dmg-marker" id="dmg-left"></div>
+</div>
+
+<div id="hud-top">
+  <div id="targetBox" class="hud-box">TARGET: <span id="targetDisplay">0</span></div>
+  <div class="hud-box" style="border-left-color:var(--danger)">KILLS: <span id="killsDisplay" class="warning">0</span></div>
+</div>
+
+<div id="hud-bottom-left">
+  <div class="hp-header">HP: <span id="hpText">100</span></div>
+  <div class="hp-bar-container">
+    <div id="hpBar" class="hp-bar-fill"></div>
+  </div>
+  <div id="staminaBar"><div id="staminaFill"></div></div>
+</div>
+
+<div id="hud-bottom-right">
+  <div id="weaponName">PISTOL</div>
+  <div id="ammoBox">
+    <span id="ammoText">12</span><span class="ammo-sep"> / </span><span id="ammoMax">12</span>
+  </div>
+</div>
+
+<div id="instructions" class="menu-screen" style="cursor:pointer;">
+  <div class="panel">
+    <h1 class="primary">MISSION START</h1>
+    <p style="font-size:1.2rem; color:#aaa;">
+      <b>W A S D</b> = Move &nbsp;|&nbsp; <b>Mouse</b> = Look &nbsp;|&nbsp; <b>Click</b> = Shoot<br>
+      <b>Shift</b> = Sprint &nbsp;|&nbsp; <b>Space</b> = Jump &nbsp;|&nbsp; <b>Ctrl / C</b> = Slide<br>
+      <b>E</b> = Pick Up Missile &nbsp;|&nbsp; <b>Right Click</b> = Scope (Sniper)<br>
+      <b>1, 2, 3</b> = Switch Weapon &nbsp;|&nbsp; <b>R</b> = Reload<br><br>
+      Reach the target kill count to win.<br>
+      On death, solve 4 math problems to respawn.
+    </p>
+    <p style="font-size:1.5rem; color:#fff; margin-top:20px;">CLICK ANYWHERE TO ENTER</p>
+  </div>
+</div>
+
+<div id="mathUI" class="menu-screen" style="display:none;">
+  <div class="panel">
+    <h1 class="primary">OVERRIDE REQUIRED</h1>
+    <div class="flash">BOMB PLANTED — ENTER CODES SEQUENTIALLY:</div>
+    <p id="q"></p>
+    <input id="ans" type="number" placeholder="Answer" autocomplete="off">
+    <p id="prog">SEQUENCE 0 OF 4 COMPLETE</p>
+  </div>
+</div>
+
+<div id="endUI" class="menu-screen" style="display:none;">
+  <div class="panel">
+    <h1 id="endTitle" class="danger">TERRORISTS WIN</h1>
+    <p style="font-size:1.2rem; margin:20px 0; color:#aaa;">
+      Final Kills: <span id="finalScore" style="color:#fff;"></span>
+    </p>
+    <div style="display:flex; gap:10px; justify-content:center;">
+      <button class="btn" onclick="location.reload()">NEW MATCH</button>
+      <button class="btn" onclick="location.href='index.html'" style="background:#222; color:#fff;">MAIN MENU</button>
+    </div>
+  </div>
+</div>
+
+<script src="shooter.js"></script>
+</body>
+</html>
